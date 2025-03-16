@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple To-Do List App</title>
+    <title>Enhanced To-Do List App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,10 +22,10 @@
         h2 {
             text-align: center;
         }
-        input[type="text"] {
-            width: 80%;
+        input[type="text"], input[type="date"], input[type="file"] {
+            width: 100%;
             padding: 10px;
-            margin-right: 10px;
+            margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
@@ -64,15 +64,23 @@
             margin-top: 10px;
             width: 100%;
         }
+        img.task-img {
+            max-width: 50px;
+            max-height: 50px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>To-Do List</h2>
+    <h2>Enhanced To-Do List</h2>
     <div>
         <input type="text" id="taskInput" placeholder="Add a task...">
-        <button onclick="addTask()">Add</button>
+        <input type="date" id="taskDeadline">
+        <input type="file" id="taskImage" accept="image/*">
+        <button onclick="addTask()">Add Task</button>
     </div>
     <ul id="taskList"></ul>
     <button class="delete-all-btn" onclick="deleteAllTasks()">Delete All Tasks</button>
@@ -81,30 +89,49 @@
 <script>
     function addTask() {
         const input = document.getElementById('taskInput');
+        const deadlineInput = document.getElementById('taskDeadline');
+        const imageInput = document.getElementById('taskImage');
         const taskText = input.value.trim();
+        const deadline = deadlineInput.value;
 
         if (taskText === '') return;
 
         const li = document.createElement('li');
-        li.innerHTML = `<span>${taskText}</span>
-            <span class="actions">
-                <button onclick="toggleComplete(this)">Complete</button>
-                <button onclick="editTask(this)">Edit</button>
-                <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
-            </span>`;
+        let taskContent = `<span>${taskText}${deadline ? ' (Due: ' + deadline + ')' : ''}</span>`;
+
+        if (imageInput.files && imageInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                li.innerHTML = `<img src="${e.target.result}" class="task-img">` + taskContent + actionsHTML();
+            };
+            reader.readAsDataURL(imageInput.files[0]);
+        } else {
+            li.innerHTML = taskContent + actionsHTML();
+        }
 
         document.getElementById('taskList').appendChild(li);
+
         input.value = '';
+        deadlineInput.value = '';
+        imageInput.value = '';
+    }
+
+    function actionsHTML() {
+        return `<span class="actions">
+                    <button onclick="toggleComplete(this)">Complete</button>
+                    <button onclick="editTask(this)">Edit</button>
+                    <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+                </span>`;
     }
 
     function toggleComplete(btn) {
-        const task = btn.parentElement.parentElement.firstChild;
+        const task = btn.parentElement.parentElement.firstChild.nextSibling || btn.parentElement.parentElement.firstChild;
         task.classList.toggle('completed');
         btn.textContent = task.classList.contains('completed') ? 'Undo' : 'Complete';
     }
 
     function editTask(btn) {
-        const task = btn.parentElement.parentElement.firstChild;
+        const task = btn.parentElement.parentElement.firstChild.nextSibling || btn.parentElement.parentElement.firstChild;
         const newTask = prompt("Edit Task", task.textContent);
         if (newTask !== null && newTask.trim() !== '') {
             task.textContent = newTask.trim();
